@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { audioManager } from '@/utils/audio'
+import { audioManager, comboFeedback } from '@/utils/audio'
 import { useSettingsStore } from '@/store/useSettingsStore'
 
 type SoundName = 'click' | 'correct' | 'wrong' | 'levelUp' | 'badge' | 'pop' | 'whoosh' | 'tick'
@@ -16,5 +16,23 @@ export function useSound() {
     [soundEnabled],
   )
 
-  return { play }
+  // 消消乐风格连击反馈
+  const comboCorrect = useCallback(() => {
+    if (soundEnabled) {
+      return comboFeedback.onCorrect()
+    }
+    return null
+  }, [soundEnabled])
+
+  const comboWrong = useCallback(() => {
+    if (soundEnabled) {
+      comboFeedback.onWrong()
+    }
+  }, [soundEnabled])
+
+  const comboReset = useCallback(() => {
+    comboFeedback.reset()
+  }, [])
+
+  return { play, comboCorrect, comboWrong, comboReset }
 }

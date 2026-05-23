@@ -12,13 +12,14 @@ interface UserState {
   loaded: boolean
   levelInfo: () => LevelInfo
   addExp: (amount: number) => void
+  setNickname: (name: string) => void
   loadFromDB: () => Promise<void>
   saveToDB: () => Promise<void>
   earnBadge: (id: string, subject: SubjectType | 'general') => Promise<boolean>
 }
 
 function calcExpNeeded(level: number) {
-  return level * 100 + 50
+  return 500 * level + 2000
 }
 
 function calcLevelInfo(totalExp: number, level: number): LevelInfo {
@@ -69,15 +70,29 @@ export const useUserStore = create<UserState>((set, get) => ({
     get().saveToDB()
   },
 
+  setNickname: (name: string) => {
+    const trimmed = name.trim()
+    if (!trimmed || trimmed.length > 8) return
+    set({ nickname: trimmed })
+    get().saveToDB()
+  },
+
   loadFromDB: async () => {
     const profile = await db.userProfile.get('default')
     const badges = await db.badges.toArray()
     if (profile) {
+      // 从 totalExp 重新计算等级（确保与新公式一致）
+      let remaining = profile.totalExp
+      let recalcLevel = 1
+      while (remaining >= calcExpNeeded(recalcLevel)) {
+        remaining -= calcExpNeeded(recalcLevel)
+        recalcLevel++
+      }
       set({
         nickname: profile.nickname,
         avatarId: profile.avatarId,
         totalExp: profile.totalExp,
-        level: profile.level,
+        level: recalcLevel,
         consecutiveDays: profile.consecutiveDays,
         badges,
         loaded: true,

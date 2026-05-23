@@ -4,12 +4,18 @@ import { FINALS } from '@/constants/pinyin-data'
 import { Card } from '@/components/common/Card'
 import { Button } from '@/components/common/Button'
 import { useSound } from '@/hooks/useSound'
+import { pinyinAudio } from '@/utils/audio'
 
 export function FinalLearn() {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const { play } = useSound()
 
   const selected = selectedIndex !== null ? FINALS[selectedIndex] : null
+
+  const speakPinyin = () => {
+    if (!selected) return
+    pinyinAudio.playPinyin(selected.char)
+  }
 
   return (
     <div>
@@ -71,7 +77,7 @@ export function FinalLearn() {
               <p style={{ fontSize: '20px', color: '#666', margin: '16px 0' }}>
                 发音：{selected.pinyin}
               </p>
-              <Button variant="primary" onClick={() => play('pop')}>
+              <Button variant="primary" onClick={speakPinyin}>
                 🔊 播放发音
               </Button>
             </Card>

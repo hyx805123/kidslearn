@@ -5,6 +5,7 @@ import { Button } from '@/components/common/Button'
 import { Card } from '@/components/common/Card'
 import { ProgressBar } from '@/components/common/ProgressBar'
 import { Confetti } from '@/components/common/Confetti'
+import { ScoreEffect } from '@/components/common/ScoreEffect'
 import { useSound } from '@/hooks/useSound'
 import { useUserStore } from '@/store/useUserStore'
 import { shuffleArray } from '@/utils/random'
@@ -43,7 +44,7 @@ export function PinyinQuiz() {
   const [score, setScore] = useState(0)
   const [finished, setFinished] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
-  const { play } = useSound()
+  const { comboCorrect, comboWrong } = useSound()
   const { addExp } = useUserStore()
 
   const question = questions[currentQ]
@@ -53,11 +54,11 @@ export function PinyinQuiz() {
     setSelected(idx)
 
     if (idx === question.correctIndex) {
-      play('correct')
+      comboCorrect()
       setScore((s) => s + 1)
       addExp(10)
     } else {
-      play('wrong')
+      comboWrong()
     }
 
     setTimeout(() => {
@@ -71,7 +72,7 @@ export function PinyinQuiz() {
         }
       }
     }, 1200)
-  }, [selected, currentQ, question, questions.length, score, play, addExp])
+  }, [selected, currentQ, question, questions.length, score, comboCorrect, comboWrong, addExp])
 
   if (finished) {
     return (
@@ -93,8 +94,9 @@ export function PinyinQuiz() {
 
   return (
     <div>
-      <div style={{ marginBottom: '24px' }}>
+      <div style={{ marginBottom: '24px', position: 'relative' }}>
         <ProgressBar value={(currentQ) / questions.length} label={`第 ${currentQ + 1} / ${questions.length} 题`} />
+        <ScoreEffect trigger={score} points={10} />
       </div>
 
       <Card color="#fff" style={{ padding: '32px', textAlign: 'center', marginBottom: '24px' }}>

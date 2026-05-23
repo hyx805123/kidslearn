@@ -4,6 +4,7 @@ import { MATH_LEVELS, generateQuestion, generateWrongAnswers, type MathQuestion 
 import { Button } from '@/components/common/Button'
 import { Card } from '@/components/common/Card'
 import { Confetti } from '@/components/common/Confetti'
+import { ScoreEffect } from '@/components/common/ScoreEffect'
 import { useSound } from '@/hooks/useSound'
 import { useUserStore } from '@/store/useUserStore'
 import { useTimer } from '@/hooks/useTimer'
@@ -18,7 +19,7 @@ export function TimedChallenge() {
   const [totalAnswered, setTotalAnswered] = useState(0)
   const [finished, setFinished] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
-  const { play } = useSound()
+  const { comboCorrect, comboWrong } = useSound()
   const { addExp } = useUserStore()
 
   const level = MATH_LEVELS[8] // mixed 1-20
@@ -26,6 +27,10 @@ export function TimedChallenge() {
   const onTimeUp = useCallback(() => {
     setFinished(true)
     if (score >= 8) setShowConfetti(true)
+    // 检查速算王徽章
+    if (score >= 15) {
+      import('@/utils/badge-checker').then(({ checkBadges }) => checkBadges({ mathTimedScore: score }))
+    }
   }, [score])
 
   const { time, start, formatted } = useTimer({
@@ -54,14 +59,15 @@ export function TimedChallenge() {
     setTotalAnswered(t => t + 1)
 
     if (val === question.answer) {
-      play('correct')
+      comboCorrect()
       setScore(s => s + 1)
       addExp(10)
     } else {
-      play('wrong')
+      comboWrong()
+      import('@/utils/wrongAnswer').then(({ recordWrongAnswer }) =>
+        recordWrongAnswer({ subject: 'math', questionType: 'timed-challenge', question: question.displayText, userAnswer: String(val), correctAnswer: String(question.answer) })
+      )
     }
-
-    setTimeout(genNewQuestion, 600)
   }
 
   if (!started) {
@@ -103,7 +109,15 @@ export function TimedChallenge() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h2 style={{ fontSize: '20px', color: '#E65100' }}>计时挑战</h2>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-          <span style={{ fontSize: '14px', color: '#666' }}>✓ {score}</span>
+          <span style={{
+            fontSize: '16px',
+            fontWeight: 700,
+            color: '#FF6D00',
+            position: 'relative',
+            background: 'linear-gradient(135deg, #FFF8E1, #FFECB3)',
+            padding: '3px 12px',
+            borderRadius: '16px',
+          }}>⭐ {score}<ScoreEffect trigger={score} points={10} /></span>
           <span style={{
             fontSize: '24px',
             fontWeight: 700,

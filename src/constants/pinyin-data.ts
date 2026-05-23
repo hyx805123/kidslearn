@@ -1,51 +1,83 @@
 export interface PinyinItem {
   char: string
   pinyin: string
+  pronounceChar: string // 用于 TTS 发音的代表汉字
   audio?: string
 }
 
-// 23个声母
+// 23个声母 - pronounceChar 是标准教学中每个声母对应的代表字
 export const INITIALS: PinyinItem[] = [
-  { char: 'b', pinyin: 'bō' }, { char: 'p', pinyin: 'pō' },
-  { char: 'm', pinyin: 'mō' }, { char: 'f', pinyin: 'fō' },
-  { char: 'd', pinyin: 'dé' }, { char: 't', pinyin: 'tè' },
-  { char: 'n', pinyin: 'né' }, { char: 'l', pinyin: 'lè' },
-  { char: 'g', pinyin: 'gē' }, { char: 'k', pinyin: 'kē' },
-  { char: 'h', pinyin: 'hē' }, { char: 'j', pinyin: 'jī' },
-  { char: 'q', pinyin: 'qī' }, { char: 'x', pinyin: 'xī' },
-  { char: 'zh', pinyin: 'zhī' }, { char: 'ch', pinyin: 'chī' },
-  { char: 'sh', pinyin: 'shī' }, { char: 'r', pinyin: 'rì' },
-  { char: 'z', pinyin: 'zī' }, { char: 'c', pinyin: 'cī' },
-  { char: 's', pinyin: 'sī' }, { char: 'y', pinyin: 'yī' },
-  { char: 'w', pinyin: 'wū' },
+  { char: 'b', pinyin: 'bō', pronounceChar: '波' },
+  { char: 'p', pinyin: 'pō', pronounceChar: '坡' },
+  { char: 'm', pinyin: 'mō', pronounceChar: '摸' },
+  { char: 'f', pinyin: 'fō', pronounceChar: '佛' },
+  { char: 'd', pinyin: 'dé', pronounceChar: '得' },
+  { char: 't', pinyin: 'tè', pronounceChar: '特' },
+  { char: 'n', pinyin: 'né', pronounceChar: '呢' },
+  { char: 'l', pinyin: 'lè', pronounceChar: '乐' },
+  { char: 'g', pinyin: 'gē', pronounceChar: '哥' },
+  { char: 'k', pinyin: 'kē', pronounceChar: '科' },
+  { char: 'h', pinyin: 'hē', pronounceChar: '喝' },
+  { char: 'j', pinyin: 'jī', pronounceChar: '鸡' },
+  { char: 'q', pinyin: 'qī', pronounceChar: '七' },
+  { char: 'x', pinyin: 'xī', pronounceChar: '西' },
+  { char: 'zh', pinyin: 'zhī', pronounceChar: '知' },
+  { char: 'ch', pinyin: 'chī', pronounceChar: '吃' },
+  { char: 'sh', pinyin: 'shī', pronounceChar: '诗' },
+  { char: 'r', pinyin: 'rì', pronounceChar: '日' },
+  { char: 'z', pinyin: 'zī', pronounceChar: '资' },
+  { char: 'c', pinyin: 'cī', pronounceChar: '词' },
+  { char: 's', pinyin: 'sī', pronounceChar: '丝' },
+  { char: 'y', pinyin: 'yī', pronounceChar: '衣' },
+  { char: 'w', pinyin: 'wū', pronounceChar: '乌' },
 ]
 
-// 24个韵母
+// 24个韵母 - pronounceChar 是韵母标准发音对应的汉字
 export const FINALS: PinyinItem[] = [
-  { char: 'a', pinyin: 'ā' }, { char: 'o', pinyin: 'ō' },
-  { char: 'e', pinyin: 'ē' }, { char: 'i', pinyin: 'ī' },
-  { char: 'u', pinyin: 'ū' }, { char: 'ü', pinyin: 'ǖ' },
-  { char: 'ai', pinyin: 'āi' }, { char: 'ei', pinyin: 'ēi' },
-  { char: 'ui', pinyin: 'uī' }, { char: 'ao', pinyin: 'āo' },
-  { char: 'ou', pinyin: 'ōu' }, { char: 'iu', pinyin: 'iū' },
-  { char: 'ie', pinyin: 'iē' }, { char: 'üe', pinyin: 'üē' },
-  { char: 'er', pinyin: 'ēr' }, { char: 'an', pinyin: 'ān' },
-  { char: 'en', pinyin: 'ēn' }, { char: 'in', pinyin: 'īn' },
-  { char: 'un', pinyin: 'ūn' }, { char: 'ün', pinyin: 'ǖn' },
-  { char: 'ang', pinyin: 'āng' }, { char: 'eng', pinyin: 'ēng' },
-  { char: 'ing', pinyin: 'īng' }, { char: 'ong', pinyin: 'ōng' },
+  { char: 'a', pinyin: 'ā', pronounceChar: '啊' },
+  { char: 'o', pinyin: 'ō', pronounceChar: '喔' },
+  { char: 'e', pinyin: 'ē', pronounceChar: '鹅' },
+  { char: 'i', pinyin: 'ī', pronounceChar: '衣' },
+  { char: 'u', pinyin: 'ū', pronounceChar: '乌' },
+  { char: 'ü', pinyin: 'ǖ', pronounceChar: '鱼' },
+  { char: 'ai', pinyin: 'āi', pronounceChar: '哀' },
+  { char: 'ei', pinyin: 'ēi', pronounceChar: '诶' },
+  { char: 'ui', pinyin: 'uī', pronounceChar: '威' },
+  { char: 'ao', pinyin: 'āo', pronounceChar: '凹' },
+  { char: 'ou', pinyin: 'ōu', pronounceChar: '欧' },
+  { char: 'iu', pinyin: 'iū', pronounceChar: '优' },
+  { char: 'ie', pinyin: 'iē', pronounceChar: '耶' },
+  { char: 'üe', pinyin: 'üē', pronounceChar: '约' },
+  { char: 'er', pinyin: 'ēr', pronounceChar: '耳' },
+  { char: 'an', pinyin: 'ān', pronounceChar: '安' },
+  { char: 'en', pinyin: 'ēn', pronounceChar: '恩' },
+  { char: 'in', pinyin: 'īn', pronounceChar: '因' },
+  { char: 'un', pinyin: 'ūn', pronounceChar: '温' },
+  { char: 'ün', pinyin: 'ǖn', pronounceChar: '晕' },
+  { char: 'ang', pinyin: 'āng', pronounceChar: '昂' },
+  { char: 'eng', pinyin: 'ēng', pronounceChar: '鞥' },
+  { char: 'ing', pinyin: 'īng', pronounceChar: '英' },
+  { char: 'ong', pinyin: 'ōng', pronounceChar: '翁' },
 ]
 
 // 16个整体认读音节
 export const WHOLE_SYLLABLES: PinyinItem[] = [
-  { char: 'zhi', pinyin: 'zhī' }, { char: 'chi', pinyin: 'chī' },
-  { char: 'shi', pinyin: 'shī' }, { char: 'ri', pinyin: 'rì' },
-  { char: 'zi', pinyin: 'zī' }, { char: 'ci', pinyin: 'cī' },
-  { char: 'si', pinyin: 'sī' }, { char: 'yi', pinyin: 'yī' },
-  { char: 'wu', pinyin: 'wū' }, { char: 'yu', pinyin: 'yǖ' },
-  { char: 'ye', pinyin: 'yē' }, { char: 'yue', pinyin: 'yuē' },
-  { char: 'yuan', pinyin: 'yuán' }, { char: 'yin', pinyin: 'yīn' },
-  { char: 'yun', pinyin: 'yún' }, { char: 'ying', pinyin: 'yīng' },
+  { char: 'zhi', pinyin: 'zhī', pronounceChar: '知' },
+  { char: 'chi', pinyin: 'chī', pronounceChar: '吃' },
+  { char: 'shi', pinyin: 'shī', pronounceChar: '诗' },
+  { char: 'ri', pinyin: 'rì', pronounceChar: '日' },
+  { char: 'zi', pinyin: 'zī', pronounceChar: '资' },
+  { char: 'ci', pinyin: 'cī', pronounceChar: '词' },
+  { char: 'si', pinyin: 'sī', pronounceChar: '丝' },
+  { char: 'yi', pinyin: 'yī', pronounceChar: '衣' },
+  { char: 'wu', pinyin: 'wū', pronounceChar: '乌' },
+  { char: 'yu', pinyin: 'yǖ', pronounceChar: '鱼' },
+  { char: 'ye', pinyin: 'yē', pronounceChar: '爷' },
+  { char: 'yue', pinyin: 'yuē', pronounceChar: '约' },
+  { char: 'yuan', pinyin: 'yuán', pronounceChar: '元' },
+  { char: 'yin', pinyin: 'yīn', pronounceChar: '因' },
+  { char: 'yun', pinyin: 'yún', pronounceChar: '云' },
+  { char: 'ying', pinyin: 'yīng', pronounceChar: '英' },
 ]
 
 // 可拼读组合示例

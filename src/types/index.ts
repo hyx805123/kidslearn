@@ -79,6 +79,17 @@ export interface AppSettings {
 
 export type BuddyMood = 'idle' | 'happy' | 'thinking' | 'cheering' | 'sad'
 
+export interface WrongAnswer {
+  id?: number
+  subject: SubjectType
+  questionType: string
+  question: string
+  userAnswer: string
+  correctAnswer: string
+  timestamp: Date
+  reviewed: boolean
+}
+
 export interface BadgeDefinition {
   id: string
   name: string

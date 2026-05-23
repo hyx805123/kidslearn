@@ -5,7 +5,7 @@ const navItems = [
   { path: '/pinyin', label: '拼音', icon: '🔤' },
   { path: '/math', label: '数学', icon: '🔢' },
   { path: '/chinese', label: '语文', icon: '📖' },
-  { path: '/english', label: '英语', icon: '🌍' },
+  { path: '/profile', label: '我的', icon: '👤' },
 ]
 
 export function BottomNav() {

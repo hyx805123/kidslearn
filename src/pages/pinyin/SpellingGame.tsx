@@ -7,6 +7,7 @@ import { Card } from '@/components/common/Card'
 import { Confetti } from '@/components/common/Confetti'
 import { useSound } from '@/hooks/useSound'
 import { useUserStore } from '@/store/useUserStore'
+import { pinyinAudio } from '@/utils/audio'
 
 function DraggableItem({ id, children }: { id: string; children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id })
@@ -77,7 +78,7 @@ export function SpellingGame() {
   const [result, setResult] = useState<'correct' | 'wrong' | null>(null)
   const [score, setScore] = useState(0)
   const [showConfetti, setShowConfetti] = useState(false)
-  const { play } = useSound()
+  const { play, comboCorrect, comboWrong } = useSound()
   const { addExp } = useUserStore()
 
   const sensors = useSensors(
@@ -95,13 +96,17 @@ export function SpellingGame() {
       setResult('correct')
       setScore(s => s + 1)
       setShowConfetti(true)
-      play('correct')
+      comboCorrect()
       addExp(10)
+      // 拼读正确后朗读该音节
+      setTimeout(() => {
+        pinyinAudio.playCombo(combo.result)
+      }, 500)
     } else {
       setResult('wrong')
-      play('wrong')
+      comboWrong()
     }
-  }, [combo, play, addExp])
+  }, [combo, comboCorrect, comboWrong, addExp])
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
@@ -149,7 +154,7 @@ export function SpellingGame() {
           拼出含义为「<strong>{combo.meaning}</strong>」的音节
         </p>
         <p style={{ textAlign: 'center', fontSize: '14px', color: '#999' }}>
-          把声母和韵母拖到对应的位置
+          点击或拖拽声母和韵母到对应位置
         </p>
       </Card>
 
@@ -172,22 +177,26 @@ export function SpellingGame() {
           </div>
         </div>
 
-        {/* 声母选项 */}
+        {/* 声母选项 - 支持点击直接放入 */}
         <div style={{ marginBottom: '20px' }}>
           <p style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>声母:</p>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             {availableInitials.map(c => (
-              <DraggableItem key={`initial-${c}`} id={`initial-${c}`}>{c}</DraggableItem>
+              <div key={`initial-${c}`} onClick={() => { if (!result) { setInitialSlot(c); play('click'); checkResult(c, finalSlot) } }}>
+                <DraggableItem id={`initial-${c}`}>{c}</DraggableItem>
+              </div>
             ))}
           </div>
         </div>
 
-        {/* 韵母选项 */}
+        {/* 韵母选项 - 支持点击直接放入 */}
         <div style={{ marginBottom: '24px' }}>
           <p style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>韵母:</p>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             {availableFinals.map(c => (
-              <DraggableItem key={`final-${c}`} id={`final-${c}`}>{c}</DraggableItem>
+              <div key={`final-${c}`} onClick={() => { if (!result) { setFinalSlot(c); play('click'); checkResult(initialSlot, c) } }}>
+                <DraggableItem id={`final-${c}`}>{c}</DraggableItem>
+              </div>
             ))}
           </div>
         </div>

@@ -1,5 +1,5 @@
 export function calcExpNeeded(level: number): number {
-  return level * 100 + 50
+  return 500 * level + 2000
 }
 
 export function calcLevel(totalExp: number): { level: number; currentExp: number; expNeeded: number } {

@@ -5,6 +5,7 @@ import { Card } from '@/components/common/Card'
 import { Button } from '@/components/common/Button'
 import { useSound } from '@/hooks/useSound'
 import { useUserStore } from '@/store/useUserStore'
+import { cdnTTS } from '@/utils/audio'
 
 export function DialogScene() {
   const [sceneIdx, setSceneIdx] = useState(0)
@@ -12,7 +13,7 @@ export function DialogScene() {
   const [selectedOption, setSelectedOption] = useState<number | null>(null)
   const [score, setScore] = useState(0)
   const [completed, setCompleted] = useState(false)
-  const { play } = useSound()
+  const { comboCorrect, comboWrong, comboReset } = useSound()
   const { addExp } = useUserStore()
 
   const scene = DIALOGS[sceneIdx]
@@ -23,11 +24,17 @@ export function DialogScene() {
     setSelectedOption(idx)
 
     if (line.correctOption !== undefined && idx === line.correctOption) {
-      play('correct')
+      comboCorrect()
       setScore(s => s + 1)
       addExp(10)
+      // 朗读正确的英文句子
+      if (line.options) {
+        setTimeout(() => {
+          cdnTTS.speakEnglish(line.options![idx])
+        }, 500)
+      }
     } else {
-      play('wrong')
+      comboWrong()
     }
 
     setTimeout(() => {
@@ -45,6 +52,7 @@ export function DialogScene() {
     setLineIdx(0)
     setSelectedOption(null)
     setCompleted(false)
+    comboReset()
   }
 
   const resetScene = () => {

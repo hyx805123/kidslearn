@@ -1,10 +1,11 @@
-import { Suspense, lazy, useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState, useCallback, useRef } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { Howler } from 'howler'
 import { AppShell } from '@/components/layout/AppShell'
 import { useUserStore } from '@/store/useUserStore'
 import { useSettingsStore } from '@/store/useSettingsStore'
 import { initDefaultData } from '@/db'
-import { audioManager } from '@/utils/audio'
+import { audioManager, comboFeedback } from '@/utils/audio'
 
 // Lazy loaded pages
 const HomePage = lazy(() => import('@/pages/HomePage').then(m => ({ default: m.HomePage })))
@@ -48,8 +49,10 @@ function Loading() {
 export function App() {
   const loadUser = useUserStore(s => s.loadFromDB)
   const loadSettings = useSettingsStore(s => s.loadFromDB)
+  const addUsedTime = useSettingsStore(s => s.addUsedTime)
   const [ready, setReady] = useState(false)
   const [audioInited, setAudioInited] = useState(false)
+  const usageTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     const init = async () => {
@@ -57,6 +60,10 @@ export function App() {
       await loadUser()
       await loadSettings()
       setReady(true)
+      // 加载完成后检查基础徽章（首次登录、连续打卡、等级）
+      setTimeout(() => {
+        import('@/utils/badge-checker').then(({ checkBadges }) => checkBadges())
+      }, 500)
     }
     init()
   }, [loadUser, loadSettings])
@@ -67,6 +74,7 @@ export function App() {
       if (!audioInited) {
         audioManager.unlock()
         audioManager.init()
+        comboFeedback.preloadPhrases()
         setAudioInited(true)
       }
     }
@@ -77,6 +85,45 @@ export function App() {
       document.removeEventListener('touchstart', initAudio)
     }
   }, [audioInited])
+
+  // 使用时长追踪 + 页面可见性管理（防止后台卡顿）
+  const startUsageTimer = useCallback(() => {
+    if (usageTimerRef.current) return
+    usageTimerRef.current = setInterval(() => {
+      addUsedTime(30)
+    }, 30000) // 每30秒记录一次
+  }, [addUsedTime])
+
+  const stopUsageTimer = useCallback(() => {
+    if (usageTimerRef.current) {
+      clearInterval(usageTimerRef.current)
+      usageTimerRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!ready) return
+
+    startUsageTimer()
+
+    // 页面可见性检测：切到后台时暂停计时和动画，减少资源消耗
+    const handleVisibility = () => {
+      if (document.hidden) {
+        stopUsageTimer()
+        try { Howler.ctx?.suspend() } catch (_e) { /* ignore */ }
+      } else {
+        startUsageTimer()
+        try { Howler.ctx?.resume() } catch (_e) { /* ignore */ }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      stopUsageTimer()
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [ready, startUsageTimer, stopUsageTimer])
 
   if (!ready) {
     return <Loading />
@@ -105,7 +152,6 @@ export function App() {
             <Route path="/math/addsub" element={<AddSubGame />} />
             <Route path="/math/muldiv" element={<AddSubGame />} />
             <Route path="/math/timed" element={<TimedChallenge />} />
-            <Route path="/math/tools" element={<MathHome />} />
 
             {/* 语文 */}
             <Route path="/chinese" element={<ChineseHome />} />

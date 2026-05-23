@@ -6,6 +6,7 @@ import type {
   LearningRecord,
   DailyChallengeRecord,
   AppSettings,
+  WrongAnswer,
 } from '@/types'
 
 class KidsLearnDB extends Dexie {
@@ -15,6 +16,7 @@ class KidsLearnDB extends Dexie {
   learningRecords!: EntityTable<LearningRecord, 'id'>
   dailyChallenges!: EntityTable<DailyChallengeRecord, 'date'>
   settings!: EntityTable<AppSettings, 'id'>
+  wrongAnswers!: EntityTable<WrongAnswer, 'id'>
 
   constructor() {
     super('KidsLearnDB')
@@ -25,6 +27,37 @@ class KidsLearnDB extends Dexie {
       learningRecords: '++id, date, subject, [date+subject]',
       dailyChallenges: 'date',
       settings: 'id',
+    })
+
+    // Version 2: 等级公式改为 500*level+2000，需要从 totalExp 重新计算 level
+    this.version(2).stores({
+      userProfile: 'id',
+      badges: 'id, subject',
+      subjectProgress: 'id, subject, lastPracticeAt',
+      learningRecords: '++id, date, subject, [date+subject]',
+      dailyChallenges: 'date',
+      settings: 'id',
+    }).upgrade(tx => {
+      return tx.table('userProfile').toCollection().modify(profile => {
+        let remaining = profile.totalExp
+        let level = 1
+        while (remaining >= (500 * level + 2000)) {
+          remaining -= (500 * level + 2000)
+          level++
+        }
+        profile.level = level
+      })
+    })
+
+    // Version 3: 添加错题本表
+    this.version(3).stores({
+      userProfile: 'id',
+      badges: 'id, subject',
+      subjectProgress: 'id, subject, lastPracticeAt',
+      learningRecords: '++id, date, subject, [date+subject]',
+      dailyChallenges: 'date',
+      settings: 'id',
+      wrongAnswers: '++id, subject, questionType, timestamp, reviewed',
     })
   }
 }

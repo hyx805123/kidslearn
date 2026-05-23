@@ -1,162 +1,86 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import HanziWriter from 'hanzi-writer'
 import { CHARACTERS } from '@/constants/chinese-data'
 import { Card } from '@/components/common/Card'
 import { Button } from '@/components/common/Button'
 import { useSound } from '@/hooks/useSound'
 
-// Map stroke type to reveal direction for animation
-function getStrokeDirection(strokeName: string): 'ltr' | 'ttb' | 'rtl-down' | 'ltr-down' | 'radial' {
-  if (strokeName.includes('横')) return 'ltr'
-  if (strokeName.includes('竖') || strokeName.includes('竖钩')) return 'ttb'
-  if (strokeName.includes('撇')) return 'rtl-down'
-  if (strokeName.includes('捺')) return 'ltr-down'
-  if (strokeName.includes('点')) return 'radial'
-  if (strokeName.includes('折')) return 'ltr'
-  return 'ttb'
-}
-
-interface StrokeCanvasProps {
+interface HanziWriterDisplayProps {
   char: string
-  strokes: number
-  strokeOrder: string[]
-  currentStroke: number
-  isAnimating: boolean
+  writerRef: React.MutableRefObject<HanziWriter | null>
 }
 
-function StrokeCanvas({ char, strokes, strokeOrder, currentStroke, isAnimating }: StrokeCanvasProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const size = 240
+function HanziWriterDisplay({
+  char,
+  writerRef,
+}: HanziWriterDisplayProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    if (!containerRef.current) return
 
-    const dpr = window.devicePixelRatio || 1
-    canvas.width = size * dpr
-    canvas.height = size * dpr
-    ctx.scale(dpr, dpr)
-    ctx.clearRect(0, 0, size, size)
+    // Clear previous instance
+    containerRef.current.innerHTML = ''
+    writerRef.current = null
 
-    // Draw grid lines (田字格)
-    ctx.strokeStyle = '#f0d0d0'
-    ctx.lineWidth = 1
-    ctx.setLineDash([4, 4])
-    // Horizontal center
-    ctx.beginPath()
-    ctx.moveTo(20, size / 2)
-    ctx.lineTo(size - 20, size / 2)
-    ctx.stroke()
-    // Vertical center
-    ctx.beginPath()
-    ctx.moveTo(size / 2, 20)
-    ctx.lineTo(size / 2, size - 20)
-    ctx.stroke()
-    // Diagonal lines
-    ctx.beginPath()
-    ctx.moveTo(20, 20)
-    ctx.lineTo(size - 20, size - 20)
-    ctx.stroke()
-    ctx.beginPath()
-    ctx.moveTo(size - 20, 20)
-    ctx.lineTo(20, size - 20)
-    ctx.stroke()
-    ctx.setLineDash([])
-
-    // Draw outer border (田字格外框)
-    ctx.strokeStyle = '#e57373'
-    ctx.lineWidth = 2
-    ctx.strokeRect(10, 10, size - 20, size - 20)
-
-    // Draw the full character as light red template (描红底)
-    ctx.font = `${size * 0.65}px "KaiTi", "STKaiti", "楷体", serif`
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillStyle = '#FFCDD2'
-    ctx.fillText(char, size / 2, size / 2 + 4)
-
-    // If animating, progressively reveal the character in dark ink
-    if (currentStroke >= 0 && isAnimating) {
-      // Use clipping to reveal portions of the character
-      ctx.save()
-
-      // Create a progressive clipping region
-      // We split the character into horizontal bands, revealing top-to-bottom
-      // But we also use stroke direction hints for more natural feel
-      ctx.beginPath()
-
-      // Calculate reveal regions based on stroke directions
-      const bandHeight = (size - 40) / strokes
-      for (let i = 0; i <= currentStroke; i++) {
-        const dir = getStrokeDirection(strokeOrder[i])
-        const bandY = 20 + i * bandHeight
-        const bandW = size - 40
-
-        switch (dir) {
-          case 'ltr':
-            ctx.rect(20, bandY, bandW, bandHeight)
-            break
-          case 'ttb':
-            ctx.rect(20, bandY, bandW, bandHeight)
-            break
-          case 'rtl-down':
-            ctx.rect(20, bandY, bandW, bandHeight)
-            break
-          case 'ltr-down':
-            ctx.rect(20, bandY, bandW, bandHeight)
-            break
-          case 'radial':
-            ctx.rect(20, bandY, bandW, bandHeight)
-            break
+    const writer = HanziWriter.create(containerRef.current, char, {
+      width: 240,
+      height: 240,
+      padding: 16,
+      showOutline: true,
+      showCharacter: false,
+      strokeAnimationSpeed: 1,
+      delayBetweenStrokes: 300,
+      strokeColor: '#333',
+      outlineColor: '#FFCDD2',
+      radicalColor: '#C2185B',
+      drawingColor: '#C2185B',
+      highlightColor: '#E53935',
+      highlightOnComplete: true,
+      // Callback handlers
+      onLoadCharDataSuccess: () => {
+        // Character loaded successfully
+      },
+      onLoadCharDataError: () => {
+        // Show the character as fallback if data can't be loaded
+        if (containerRef.current) {
+          containerRef.current.innerHTML = `
+            <div style="width:240px;height:240px;display:flex;align-items:center;justify-content:center;
+              border:2px solid #e57373;border-radius:16px;background:#fff;">
+              <span style="font-size:120px;color:#FFCDD2;font-family:KaiTi,STKaiti,楷体,serif;">${char}</span>
+            </div>`
         }
+      },
+    })
+
+    writerRef.current = writer
+
+    return () => {
+      writerRef.current = null
+      if (containerRef.current) {
+        containerRef.current.innerHTML = ''
       }
-      ctx.clip()
-
-      // Draw the dark character within the clipped region
-      ctx.fillStyle = '#333'
-      ctx.font = `${size * 0.65}px "KaiTi", "STKaiti", "楷体", serif`
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.fillText(char, size / 2, size / 2 + 4)
-
-      ctx.restore()
-
-      // Draw an animated "pen tip" indicator at the current stroke position
-      if (currentStroke < strokes) {
-        const penY = 20 + (currentStroke + 0.5) * bandHeight
-        const dir = getStrokeDirection(strokeOrder[currentStroke])
-        let penX = size / 2
-        if (dir === 'ltr' || dir === 'ltr-down') penX = 20 + (size - 40) * 0.9
-        else if (dir === 'rtl-down') penX = 20 + (size - 40) * 0.1
-        else penX = size / 2
-
-        // Draw pen indicator
-        ctx.beginPath()
-        ctx.arc(penX, penY, 6, 0, Math.PI * 2)
-        ctx.fillStyle = '#E53935'
-        ctx.fill()
-        ctx.strokeStyle = '#fff'
-        ctx.lineWidth = 2
-        ctx.stroke()
-      }
-    } else if (!isAnimating && currentStroke >= strokes - 1) {
-      // Animation completed: show full character in dark
-      ctx.fillStyle = '#333'
-      ctx.fillText(char, size / 2, size / 2 + 4)
     }
-  }, [char, strokes, strokeOrder, currentStroke, isAnimating, size])
+  }, [char])
 
   return (
-    <canvas
-      ref={canvasRef}
+    <div
+      ref={containerRef}
       style={{
-        width: `${size}px`,
-        height: `${size}px`,
-        borderRadius: '16px',
-        display: 'block',
+        width: '240px',
+        height: '240px',
         margin: '0 auto',
+        position: 'relative',
+        borderRadius: '16px',
+        border: '2px solid #e57373',
+        overflow: 'hidden',
+        background: '#fff',
+        // Draw 田字格 grid lines via CSS
+        backgroundImage: `
+          linear-gradient(to right, transparent 49.5%, #f0d0d0 49.5%, #f0d0d0 50.5%, transparent 50.5%),
+          linear-gradient(to bottom, transparent 49.5%, #f0d0d0 49.5%, #f0d0d0 50.5%, transparent 50.5%)
+        `,
       }}
     />
   )
@@ -167,47 +91,57 @@ export function StrokeOrder() {
   const [isAnimating, setIsAnimating] = useState(false)
   const [currentStroke, setCurrentStroke] = useState(-1)
   const [animationDone, setAnimationDone] = useState(false)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const writerRef = useRef<HanziWriter | null>(null)
   const { play } = useSound()
 
   const char = CHARACTERS[selectedIdx]
 
-  const stopAnimation = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-  }, [])
-
   const playAnimation = useCallback(() => {
-    stopAnimation()
+    if (!writerRef.current || isAnimating) return
+
     setIsAnimating(true)
     setAnimationDone(false)
     setCurrentStroke(0)
     play('pop')
 
-    let i = 0
-    intervalRef.current = setInterval(() => {
-      i++
-      if (i >= char.strokeOrder.length) {
-        stopAnimation()
+    writerRef.current.animateCharacter({
+      onComplete: () => {
         setIsAnimating(false)
         setAnimationDone(true)
+        setCurrentStroke(-1)
         play('correct')
-      } else {
-        setCurrentStroke(i)
-        play('tick')
-      }
-    }, 700)
-  }, [char, play, stopAnimation])
+      },
+    })
+  }, [isAnimating, play])
 
-  // Cleanup on unmount or character change
-  useEffect(() => {
-    return () => stopAnimation()
-  }, [stopAnimation])
+  const handleQuizMode = useCallback(() => {
+    if (!writerRef.current || isAnimating) return
+
+    setIsAnimating(true)
+    setAnimationDone(false)
+    setCurrentStroke(0)
+
+    writerRef.current.quiz({
+      onMistake: () => {
+        play('wrong')
+      },
+      onCorrectStroke: (strokeData) => {
+        setCurrentStroke(strokeData.strokeNum + 1)
+        play('tick')
+      },
+      onComplete: () => {
+        setIsAnimating(false)
+        setAnimationDone(true)
+        setCurrentStroke(-1)
+        play('correct')
+      },
+    })
+  }, [isAnimating, play])
 
   const handleSelectChar = (i: number) => {
-    stopAnimation()
+    if (writerRef.current) {
+      writerRef.current.cancelQuiz()
+    }
     setSelectedIdx(i)
     setCurrentStroke(-1)
     setIsAnimating(false)
@@ -215,11 +149,21 @@ export function StrokeOrder() {
     play('click')
   }
 
+  const handleReset = useCallback(() => {
+    if (!writerRef.current) return
+    writerRef.current.cancelQuiz()
+    writerRef.current.hideCharacter()
+    writerRef.current.showOutline()
+    setIsAnimating(false)
+    setAnimationDone(false)
+    setCurrentStroke(-1)
+  }, [])
+
   return (
     <div>
       <h2 style={{ fontSize: '24px', marginBottom: '8px', color: '#C2185B' }}>汉字笔顺</h2>
       <p style={{ fontSize: '14px', color: '#666', marginBottom: '24px' }}>
-        选择一个汉字，观看笔顺描红演示
+        选择汉字，观看笔顺动画或手写练习
       </p>
 
       {/* 汉字选择网格 */}
@@ -264,18 +208,15 @@ export function StrokeOrder() {
           exit={{ opacity: 0, y: -10 }}
         >
           <Card color="#fff" style={{ textAlign: 'center', padding: '32px' }}>
-            {/* Canvas 描红演示区 */}
+            {/* hanzi-writer 描红演示区 */}
             <div style={{ marginBottom: '24px' }}>
-              <StrokeCanvas
+              <HanziWriterDisplay
                 char={char.char}
-                strokes={char.strokes}
-                strokeOrder={char.strokeOrder}
-                currentStroke={currentStroke}
-                isAnimating={isAnimating}
+                writerRef={writerRef}
               />
             </div>
 
-            {/* 信息 */}
+            {/* 汉字信息 */}
             <div style={{ marginBottom: '16px' }}>
               <p style={{ fontSize: '18px', color: '#333', marginBottom: '4px' }}>
                 <strong>{char.char}</strong> ({char.pinyin}) — {char.meaning}
@@ -285,9 +226,9 @@ export function StrokeOrder() {
               </p>
             </div>
 
-            {/* 笔顺步骤指示器 */}
+            {/* 笔顺步骤 */}
             <div style={{ marginBottom: '24px' }}>
-              <p style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>笔顺步骤：</p>
+              <p style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>笔顺：</p>
               <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap' }}>
                 {char.strokeOrder.map((stroke, i) => {
                   let bg = '#f5f5f5'
@@ -333,14 +274,30 @@ export function StrokeOrder() {
               </motion.p>
             )}
 
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+            {/* 操作按钮 */}
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <Button
                 variant="primary"
                 onClick={playAnimation}
                 disabled={isAnimating}
               >
-                {isAnimating ? '描红中...' : animationDone ? '🔄 重新演示' : '✍️ 开始描红'}
+                {isAnimating ? '描红中...' : animationDone ? '🔄 重新演示' : '✍️ 笔顺演示'}
               </Button>
+              <Button
+                variant="accent"
+                onClick={handleQuizMode}
+                disabled={isAnimating}
+              >
+                ✏️ 手写练习
+              </Button>
+              {(isAnimating || animationDone) && (
+                <Button
+                  variant="secondary"
+                  onClick={handleReset}
+                >
+                  重置
+                </Button>
+              )}
             </div>
           </Card>
         </motion.div>

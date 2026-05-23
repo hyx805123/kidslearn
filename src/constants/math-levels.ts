@@ -2,10 +2,12 @@ export interface MathLevel {
   id: number
   name: string
   type: 'add' | 'sub' | 'mul' | 'div' | 'mixed'
+  ops?: ('+' | '-' | '×' | '÷')[] // 显式指定运算符，优先级高于 type
   minNum: number
   maxNum: number
   questionCount: number
   timeLimit?: number
+  threeNumbers?: boolean // 是否生成三个数字的运算题
 }
 
 export const MATH_LEVELS: MathLevel[] = [
@@ -19,9 +21,10 @@ export const MATH_LEVELS: MathLevel[] = [
   { id: 6, name: '减法进阶 (1-20)', type: 'sub', minNum: 1, maxNum: 20, questionCount: 10 },
   { id: 7, name: '减法挑战 (1-50)', type: 'sub', minNum: 1, maxNum: 50, questionCount: 10 },
   { id: 8, name: '减法大师 (1-100)', type: 'sub', minNum: 1, maxNum: 100, questionCount: 10 },
-  // 加减混合
-  { id: 9, name: '加减混合 (1-20)', type: 'mixed', minNum: 1, maxNum: 20, questionCount: 12 },
-  { id: 10, name: '加减混合 (1-50)', type: 'mixed', minNum: 1, maxNum: 50, questionCount: 12 },
+  // 加减混合（只用+和-，含三数运算）
+  { id: 9, name: '加减混合 (1-20)', type: 'mixed', ops: ['+', '-'], minNum: 1, maxNum: 20, questionCount: 12, threeNumbers: true },
+  { id: 10, name: '加减混合 (1-50)', type: 'mixed', ops: ['+', '-'], minNum: 1, maxNum: 50, questionCount: 12, threeNumbers: true },
+  { id: 19, name: '加减混合 (1-100)', type: 'mixed', ops: ['+', '-'], minNum: 1, maxNum: 100, questionCount: 12, threeNumbers: true },
   // 乘法
   { id: 11, name: '乘法入门 (1-5)', type: 'mul', minNum: 1, maxNum: 5, questionCount: 10 },
   { id: 12, name: '乘法进阶 (1-9)', type: 'mul', minNum: 1, maxNum: 9, questionCount: 10 },
@@ -44,12 +47,20 @@ export interface MathQuestion {
 }
 
 export function generateQuestion(level: MathLevel): MathQuestion {
-  const ops = level.type === 'mixed'
-    ? ['+', '-', '×', '÷'] as const
-    : level.type === 'add' ? ['+'] as const
-    : level.type === 'sub' ? ['-'] as const
-    : level.type === 'mul' ? ['×'] as const
-    : ['÷'] as const
+  // 三数运算模式：如 5 + 3 - 2 = ?
+  if (level.threeNumbers) {
+    return generateThreeNumberQuestion(level)
+  }
+
+  // 优先使用 level.ops（显式指定的运算符），否则根据 type 推断
+  const ops: readonly ('+' | '-' | '×' | '÷')[] = level.ops
+    ? level.ops
+    : level.type === 'mixed'
+      ? ['+', '-', '×', '÷']
+      : level.type === 'add' ? ['+']
+      : level.type === 'sub' ? ['-']
+      : level.type === 'mul' ? ['×']
+      : ['÷']
 
   const op = ops[Math.floor(Math.random() * ops.length)]
   const range = level.maxNum - level.minNum + 1
@@ -88,6 +99,55 @@ export function generateQuestion(level: MathLevel): MathQuestion {
   return {
     num1, num2, operator: op, answer,
     displayText: `${num1} ${op} ${num2} = ?`,
+  }
+}
+
+/**
+ * 生成三个数字的加减混合题（用于形成肌肉记忆）
+ * 如：5 + 3 - 2 = ?  或  12 - 4 + 7 = ?
+ * 确保中间结果和最终结果都不为负数且在合理范围内
+ */
+function generateThreeNumberQuestion(level: MathLevel): MathQuestion {
+  const ops = level.ops || ['+', '-']
+  const maxNum = level.maxNum
+  const minNum = level.minNum
+
+  let num1: number, num2: number, num3: number
+  let op1: '+' | '-', op2: '+' | '-'
+  let midResult: number, finalResult: number
+
+  // 最多尝试 50 次确保合理
+  let attempts = 0
+  do {
+    attempts++
+    op1 = ops[Math.floor(Math.random() * ops.length)] as '+' | '-'
+    op2 = ops[Math.floor(Math.random() * ops.length)] as '+' | '-'
+
+    // 第一个数字较大，确保后续减法不会出现负数
+    num1 = Math.floor(Math.random() * (maxNum - minNum) * 0.7) + minNum + Math.floor((maxNum - minNum) * 0.15)
+    num2 = Math.floor(Math.random() * Math.floor(num1 * 0.6)) + minNum
+    num3 = Math.floor(Math.random() * Math.floor(num1 * 0.5)) + minNum
+
+    midResult = op1 === '+' ? num1 + num2 : num1 - num2
+    finalResult = op2 === '+' ? midResult + num3 : midResult - num3
+  } while ((midResult < 0 || finalResult < 0 || finalResult > maxNum * 1.5) && attempts < 50)
+
+  // 安全兜底
+  if (midResult < 0 || finalResult < 0 || finalResult > maxNum * 1.5) {
+    num1 = Math.floor(maxNum * 0.6)
+    num2 = Math.floor(maxNum * 0.2)
+    num3 = Math.floor(maxNum * 0.1)
+    op1 = '+'
+    op2 = '-'
+    finalResult = num1 + num2 - num3
+  }
+
+  return {
+    num1,
+    num2,
+    operator: op1!,
+    answer: finalResult,
+    displayText: `${num1} ${op1!} ${num2} ${op2!} ${num3} = ?`,
   }
 }
 

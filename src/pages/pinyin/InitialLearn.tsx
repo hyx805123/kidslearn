@@ -4,12 +4,18 @@ import { INITIALS } from '@/constants/pinyin-data'
 import { Card } from '@/components/common/Card'
 import { Button } from '@/components/common/Button'
 import { useSound } from '@/hooks/useSound'
+import { pinyinAudio } from '@/utils/audio'
 
 export function InitialLearn() {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const { play } = useSound()
 
   const selected = selectedIndex !== null ? INITIALS[selectedIndex] : null
+
+  const speakPinyin = () => {
+    if (!selected) return
+    pinyinAudio.playPinyin(selected.char)
+  }
 
   return (
     <div>
@@ -75,7 +81,7 @@ export function InitialLearn() {
               </p>
               <Button
                 variant="primary"
-                onClick={() => play('pop')}
+                onClick={speakPinyin}
               >
                 🔊 播放发音
               </Button>

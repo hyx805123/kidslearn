@@ -4,12 +4,19 @@ import { ALPHABET } from '@/constants/english-data'
 import { Card } from '@/components/common/Card'
 import { Button } from '@/components/common/Button'
 import { useSound } from '@/hooks/useSound'
+import { cdnTTS } from '@/utils/audio'
 
 export function AlphabetLearn() {
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
   const { play } = useSound()
 
   const letter = selectedIdx !== null ? ALPHABET[selectedIdx] : null
+
+  const speakLetter = () => {
+    if (!letter) return
+    // 先读字母名，再读代表单词
+    cdnTTS.speakSequence([letter.upper, letter.word], 'en')
+  }
 
   return (
     <div>
@@ -31,7 +38,12 @@ export function AlphabetLearn() {
             key={item.upper}
             whileHover={{ scale: 1.15 }}
             whileTap={{ scale: 0.9 }}
-            onClick={() => { setSelectedIdx(i); play('click') }}
+            onClick={() => {
+              setSelectedIdx(i)
+              play('click')
+              // 选中时自动朗读字母
+              cdnTTS.speakEnglish(item.upper)
+            }}
             style={{
               width: '56px',
               height: '56px',
@@ -87,7 +99,7 @@ export function AlphabetLearn() {
                 {letter.word} = {letter.wordChinese}
               </p>
 
-              <Button variant="accent" onClick={() => play('pop')}>
+              <Button variant="accent" onClick={speakLetter}>
                 🔊 Play Sound
               </Button>
             </Card>

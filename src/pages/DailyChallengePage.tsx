@@ -4,6 +4,7 @@ import dayjs from 'dayjs'
 import { Card } from '@/components/common/Card'
 import { ProgressBar } from '@/components/common/ProgressBar'
 import { Confetti } from '@/components/common/Confetti'
+import { ScoreEffect } from '@/components/common/ScoreEffect'
 import { useSound } from '@/hooks/useSound'
 import { useUserStore } from '@/store/useUserStore'
 import { seededRandom, pickRandom } from '@/utils/random'
@@ -82,7 +83,7 @@ export function DailyChallengePage() {
   const [score, setScore] = useState(0)
   const [finished, setFinished] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
-  const { play } = useSound()
+  const { comboCorrect, comboWrong } = useSound()
   const { addExp } = useUserStore()
 
   const question = questions[currentQ]
@@ -92,11 +93,11 @@ export function DailyChallengePage() {
     setSelected(idx)
 
     if (idx === question.correctIndex) {
-      play('correct')
+      comboCorrect()
       setScore(s => s + 1)
       addExp(15)
     } else {
-      play('wrong')
+      comboWrong()
     }
 
     setTimeout(() => {
@@ -108,9 +109,14 @@ export function DailyChallengePage() {
         if (score + (idx === question.correctIndex ? 1 : 0) === questions.length) {
           setShowConfetti(true)
         }
+        // 检查徽章
+        import('@/utils/badge-checker').then(({ checkBadges }) => {
+          const finalScore = score + (idx === question.correctIndex ? 1 : 0)
+          checkBadges({ dailyChallengeScore: finalScore, dailyChallengeTotal: questions.length })
+        })
       }
     }, 1500)
-  }, [selected, currentQ, question, questions.length, score, play, addExp])
+  }, [selected, currentQ, question, questions.length, score, comboCorrect, comboWrong, addExp])
 
   if (finished) {
     return (
@@ -154,7 +160,10 @@ export function DailyChallengePage() {
         <p style={{ fontSize: '14px' }}>{today} | 每天 3 道跨学科趣味题</p>
       </motion.div>
 
-      <ProgressBar value={currentQ / questions.length} color="#FFA726" label={`第 ${currentQ + 1} / ${questions.length} 题`} />
+      <div style={{ position: 'relative' }}>
+        <ProgressBar value={currentQ / questions.length} color="#FFA726" label={`第 ${currentQ + 1} / ${questions.length} 题`} />
+        <ScoreEffect trigger={score} points={15} />
+      </div>
 
       <Card color="#fff" style={{ padding: '32px', margin: '24px 0', textAlign: 'center' }}>
         <span style={{
