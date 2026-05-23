@@ -27,7 +27,7 @@ export function ParentPage() {
   // 家长验证门
   if (!verified) {
     return (
-      <div style={{ maxWidth: '400px', margin: '60px auto', textAlign: 'center' }}>
+      <div style={{ maxWidth: '400px', width: '100%', margin: '60px auto', textAlign: 'center', padding: '0 16px' }}>
         <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>🔒</span>
         <h2 style={{ fontSize: '24px', marginBottom: '8px' }}>家长模式</h2>
         <p style={{ fontSize: '14px', color: '#666', marginBottom: '24px' }}>

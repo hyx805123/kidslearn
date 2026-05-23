@@ -17,6 +17,8 @@ class CDNTTSManager {
   private _maxCache = 50
   private _currentSound: Howl | null = null
   private _cacheOrder: string[] = []
+  private _memoryUsage = 0 // 粗略估算缓存占用（MB）
+  private _maxMemoryMB = 100 // 最大缓存 100MB
 
   get enabled() { return this._enabled }
   set enabled(v: boolean) { this._enabled = v }
@@ -35,13 +37,8 @@ class CDNTTSManager {
     if (cached) return cached
 
     // FIFO 缓存淘汰
-    if (this._cache.size >= this._maxCache) {
-      const oldest = this._cacheOrder.shift()
-      if (oldest) {
-        const old = this._cache.get(oldest)
-        old?.unload()
-        this._cache.delete(oldest)
-      }
+    if (this._cache.size >= this._maxCache || this._memoryUsage > this._maxMemoryMB) {
+      this.evictCache()
     }
 
     const howl = new Howl({
@@ -51,7 +48,23 @@ class CDNTTSManager {
     })
     this._cache.set(url, howl)
     this._cacheOrder.push(url)
+    // 粗略估算：每个音频约 50KB
+    this._memoryUsage += 0.05
     return howl
+  }
+
+  // 清理部分缓存
+  private evictCache() {
+    const toRemove = Math.min(10, this._cache.size)
+    for (let i = 0; i < toRemove; i++) {
+      const oldest = this._cacheOrder.shift()
+      if (oldest) {
+        const old = this._cache.get(oldest)
+        old?.unload()
+        this._cache.delete(oldest)
+        this._memoryUsage = Math.max(0, this._memoryUsage - 0.05)
+      }
+    }
   }
 
   private play(url: string) {
@@ -122,6 +135,14 @@ class CDNTTSManager {
       this._currentSound.stop()
       this._currentSound = null
     }
+  }
+
+  // 清理所有缓存
+  clearCache() {
+    this._cache.forEach(howl => howl.unload())
+    this._cache.clear()
+    this._cacheOrder = []
+    this._memoryUsage = 0
   }
 }
 

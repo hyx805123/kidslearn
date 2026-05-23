@@ -126,18 +126,22 @@
 | React | UI 框架 | 18.x |
 | TypeScript | 类型安全 | 5.x |
 | Vite | 构建工具 | 5.x |
-| Zustand | 状态管理 | 4.x |
-| Dexie.js | IndexedDB 封装 | 3.x |
+| Zustand | 状态管理 | 5.x |
+| Dexie.js | IndexedDB 封装 | 4.x |
 | @dnd-kit/core | 拖拽交互 | 6.x |
 | Framer Motion | 动画效果 | 10.x |
 | Howler.js | 音频播放 | 2.x |
 | canvas-confetti | 庆祝特效 | 1.x |
-| Capacitor | 安卓封装 | 7.x |
+| Capacitor | 安卓封装 | 8.x |
 
 ### 架构特点
 
 - **纯前端 SPA** — 无后端依赖，可部署到任何静态托管服务
-- **离线优先** — IndexedDB 存储用户数据、学习进度、设置偏好
+### 离线说明
+
+- **基础功能完全离线可用** — 所有学习内容、音效、动画内置
+- **发音功能需要网络** — TTS 语音合成依赖有道词典 API（可选）
+- **数据本地存储** — IndexedDB 存储用户数据、学习进度、设置偏好
 - **Web Audio API** — 程序化生成音效（正确/错误/升级等），无需音频文件
 - **Canvas 绘图** — 汉字描红使用 Canvas 实现田字格和笔画动画
 - **响应式设计** — 自适应桌面端 (侧边栏) 和移动端 (底部导航)
@@ -149,8 +153,15 @@
 
 ### 环境要求
 
-- Node.js >= 16.0
-- npm >= 7.0
+- Node.js >= 18.0
+- npm >= 9.0
+
+### Windows 用户注意
+
+如果使用 PowerShell 运行 npm 命令时遇到执行策略错误，请运行：
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
 
 ### 安装与运行
 
@@ -386,6 +397,34 @@ Web 版本支持任何现代浏览器，包括 iPad Safari、Android 平板 Chro
 
 ---
 
+## 更新日志
+
+### v0.1.0-beta (2026-05-23)
+
+#### 功能优化
+- **拼音学习交互优化** - 点击拼音卡片时直接播放读音，无需额外点击播放按钮，提升学习体验
+- **使用时长追踪精度提升** - 从 30 秒改为 10 秒记录一次，提高统计准确性
+- **徽章检查性能优化** - 添加已获徽章检查，避免重复调用，提升性能
+- **音频缓存管理** - 添加内存监控和智能缓存淘汰策略，限制最大 100MB 占用
+
+#### Bug 修复
+- **路由配置错误** - 修复 4 个未实现页面路由复用问题，添加 TODO 标记
+- **nul 文件问题** - 删除 Windows 保留设备名文件，解决 Git 跟踪问题
+- **数据库初始化** - 完善 Version 3 错题本表初始化说明
+- **响应式设计** - 修复家长页面固定宽度问题，优化小屏幕适配
+
+#### 新增功能
+- **Error Boundary** - 添加 React 错误边界组件，提供友好错误页面和刷新功能
+- **ESLint 配置** - 添加代码质量检查配置，统一代码规范
+
+#### 文档更新
+- **版本号统一** - package.json 和 README 版本统一为 v0.1.0-beta
+- **技术栈版本** - 更新 Node.js 18+、npm 9+、Zustand 5.x、Dexie 4.x、Capacitor 8.x
+- **Windows 配置** - 添加 PowerShell 执行策略配置说明
+- **离线说明** - 明确标注基础功能离线可用，TTS 发音需要网络
+
+---
+
 ## 版权与联系
 
 ```
@@ -507,8 +546,8 @@ Fully offline, privacy-first — no server, no data collection.
 
 ### Prerequisites
 
-- Node.js >= 16.0
-- npm >= 7.0
+- Node.js >= 18.0
+- npm >= 9.0
 
 ### Installation
 
@@ -542,7 +581,7 @@ npm run build
 
 - **Minimum**: Android 7.0 (API 24)
 - **Tested on**: Xiaomi, OPPO, OnePlus devices
-- **APK Size**: ~5MB
+- **APK Size**: ~8MB
 
 ### Build from Source
 
@@ -555,6 +594,14 @@ cd android && ./gradlew assembleDebug
 
 > Requires JDK 21 + Android SDK 36 + Gradle 8.12.  
 > Chinese Maven mirrors (Aliyun) pre-configured.
+
+### 构建产物
+
+Web 版本构建后，`dist/` 目录包含完整的静态文件，可直接部署到：
+- GitHub Pages
+- Vercel / Netlify
+- Nginx / Apache
+- 任何静态文件服务器
 
 ---
 
@@ -602,6 +649,34 @@ Add entries to `src/constants/badges.ts`:
   condition: (user) => user.totalCorrect >= 100
 }
 ```
+
+---
+
+## Changelog
+
+### v0.1.0-beta (2026-05-23)
+
+#### Feature Improvements
+- **Pinyin Learning UX** - Click pinyin cards to play audio directly, no extra button click needed
+- **Usage Tracking Precision** - Improved from 30s to 10s intervals for better accuracy
+- **Badge Check Optimization** - Added duplicate check to avoid redundant earnBadge calls
+- **Audio Cache Management** - Added memory monitoring and smart eviction, capped at 100MB
+
+#### Bug Fixes
+- **Route Configuration** - Fixed 4 routes reusing wrong components, added TODO markers
+- **nul File Issue** - Removed Windows reserved device name file, fixed Git tracking
+- **Database Init** - Completed Version 3 wrong answers table initialization docs
+- **Responsive Design** - Fixed ParentPage fixed width issue for better mobile support
+
+#### New Features
+- **Error Boundary** - Added React error boundary with friendly error page and refresh button
+- **ESLint Config** - Added code quality checking configuration
+
+#### Documentation
+- **Version Alignment** - Unified package.json and README to v0.1.0-beta
+- **Tech Stack Versions** - Updated to Node.js 18+, npm 9+, Zustand 5.x, Dexie 4.x, Capacitor 8.x
+- **Windows Setup** - Added PowerShell execution policy configuration guide
+- **Offline Notice** - Clarified basic features work offline, TTS requires network
 
 ---
 

@@ -45,6 +45,8 @@ export function InitialLearn() {
               onClick={() => {
                 setSelectedIndex(i)
                 play('click')
+                // 点击卡片时直接播放读音
+                pinyinAudio.playPinyin(item.char)
               }}
               style={{
                 padding: '16px',

@@ -92,4 +92,7 @@ export async function initDefaultData() {
       lastTimeCheckDate: new Date().toISOString().split('T')[0],
     })
   }
+
+  // 确保错题本表已初始化（Version 3 添加）
+  // 表结构已在数据库版本迁移中创建，这里无需额外初始化
 }

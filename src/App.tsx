@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useState, useCallback, useRef } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Howler } from 'howler'
 import { AppShell } from '@/components/layout/AppShell'
+import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import { useUserStore } from '@/store/useUserStore'
 import { useSettingsStore } from '@/store/useSettingsStore'
 import { initDefaultData } from '@/db'
@@ -90,8 +91,8 @@ export function App() {
   const startUsageTimer = useCallback(() => {
     if (usageTimerRef.current) return
     usageTimerRef.current = setInterval(() => {
-      addUsedTime(30)
-    }, 30000) // 每30秒记录一次
+      addUsedTime(10)
+    }, 10000) // 每10秒记录一次，提高精度
   }, [addUsedTime])
 
   const stopUsageTimer = useCallback(() => {
@@ -131,44 +132,50 @@ export function App() {
 
   return (
     <BrowserRouter>
-      <Suspense fallback={<Loading />}>
-        <Routes>
-          <Route element={<AppShell />}>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/challenge" element={<DailyChallengePage />} />
-            <Route path="/parent" element={<ParentPage />} />
+      <ErrorBoundary>
+        <Suspense fallback={<Loading />}>
+          <Routes>
+            <Route element={<AppShell />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/challenge" element={<DailyChallengePage />} />
+              <Route path="/parent" element={<ParentPage />} />
 
-            {/* 拼音 */}
-            <Route path="/pinyin" element={<PinyinHome />} />
-            <Route path="/pinyin/initials" element={<InitialLearn />} />
-            <Route path="/pinyin/finals" element={<FinalLearn />} />
-            <Route path="/pinyin/tones" element={<InitialLearn />} />
-            <Route path="/pinyin/spelling" element={<SpellingGame />} />
-            <Route path="/pinyin/quiz" element={<PinyinQuiz />} />
+              {/* 拼音 */}
+              <Route path="/pinyin" element={<PinyinHome />} />
+              <Route path="/pinyin/initials" element={<InitialLearn />} />
+              <Route path="/pinyin/finals" element={<FinalLearn />} />
+              {/* TODO: 声调学习页面待实现 */}
+              {/* <Route path="/pinyin/tones" element={<ToneLearn />} /> */}
+              <Route path="/pinyin/spelling" element={<SpellingGame />} />
+              <Route path="/pinyin/quiz" element={<PinyinQuiz />} />
 
-            {/* 数学 */}
-            <Route path="/math" element={<MathHome />} />
-            <Route path="/math/addsub" element={<AddSubGame />} />
-            <Route path="/math/muldiv" element={<AddSubGame />} />
-            <Route path="/math/timed" element={<TimedChallenge />} />
+              {/* 数学 */}
+              <Route path="/math" element={<MathHome />} />
+              <Route path="/math/addsub" element={<AddSubGame />} />
+              {/* TODO: 乘除法页面待实现 */}
+              {/* <Route path="/math/muldiv" element={<MulDivGame />} /> */}
+              <Route path="/math/timed" element={<TimedChallenge />} />
 
-            {/* 语文 */}
-            <Route path="/chinese" element={<ChineseHome />} />
-            <Route path="/chinese/stroke" element={<StrokeOrder />} />
-            <Route path="/chinese/idiom" element={<IdiomStory />} />
-            <Route path="/chinese/poetry" element={<PoetryRead />} />
-            <Route path="/chinese/quiz" element={<ChineseHome />} />
+              {/* 语文 */}
+              <Route path="/chinese" element={<ChineseHome />} />
+              <Route path="/chinese/stroke" element={<StrokeOrder />} />
+              <Route path="/chinese/idiom" element={<IdiomStory />} />
+              <Route path="/chinese/poetry" element={<PoetryRead />} />
+              {/* TODO: 语文测验页面待实现 */}
+              {/* <Route path="/chinese/quiz" element={<ChineseQuiz />} /> */}
 
-            {/* 英语 */}
-            <Route path="/english" element={<EnglishHome />} />
-            <Route path="/english/alphabet" element={<AlphabetLearn />} />
-            <Route path="/english/words" element={<WordBuilder />} />
-            <Route path="/english/phonics" element={<AlphabetLearn />} />
-            <Route path="/english/dialog" element={<DialogScene />} />
-          </Route>
-        </Routes>
-      </Suspense>
+              {/* 英语 */}
+              <Route path="/english" element={<EnglishHome />} />
+              <Route path="/english/alphabet" element={<AlphabetLearn />} />
+              <Route path="/english/words" element={<WordBuilder />} />
+              {/* TODO: 语音学习页面待实现 */}
+              {/* <Route path="/english/phonics" element={<PhonicsLearn />} /> */}
+              <Route path="/english/dialog" element={<DialogScene />} />
+            </Route>
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
     </BrowserRouter>
   )
 }
